@@ -10,23 +10,31 @@ on:
         DEVICE:
               description: ' Enter Your Device Name '
               required: true
-              default: 'Samsung Galaxy A03'
+              default: 'Samsung Galaxy A03-A035M'
         GSI:
               description: ' GSI Image Direct Link '
               required: true
-              default: 'https://github.com/ponces/treble_build_aosp/releases/download/v2023.12.01/aosp-arm64-ab-gapps-14.0-20231201.img.xz'        
+              default: 'https://github.com/TrebleDroid/treble_experimentations/releases/download/ci-20230905/system-td-arm64-ab-vanilla.img.xz'        
         NAME:
               description: 'Rom Name'
               required: true
-              default: 'aosp-arm64-ab-gapps-14.0-a03.7z'
+              default: 'aosp_13-arm64-abv-a03-a035m.7z'
         VERSION:
               description: 'Baseband Version'
               required: true
-              default: 'A035FXXU4CWI1'
+              default: 'A035MUBS8CYA3'
         SUPER:
               description: 'Enter Direct Link Of Your Super.img'
               required: true
-              default: 'https://sourceforge.net/projects/a03-files/files/A035FXXU4CWI1/super.img'
+              default: 'https://drive.google.com/file/d/1f5bs-56UJbv1ln57mYKIxk_DAtfvzKxl/view?usp=drive_link'
+        PRODUCT:
+              description: 'Firmware Product Img'
+              required: false
+              default: ''
+        SYSTEM_EXT:
+              description: 'Firmware System_ext Img'
+              required: false
+              default: '' 
 jobs:
   Build:
     runs-on: ubuntu-latest
@@ -40,7 +48,18 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y zip xz-utils unzip p7zip-full
-        sudo apt install simg2img -y
+        sudo snap install android-platform-tools
+        sudo snap connect android-platform-tools:adb-support
+        sudo snap connect android-platform-tools:block-devices
+        sudo snap connect android-platform-tools:raw-usb
+        sudo snap connect android-platform-tools:removable-media
+        sudo snap connect android-platform-tools:network
+        sudo snap connect android-platform-tools:network-bind       
+        sudo snap alias android-platform-tools.img2simg img2simg
+        sudo snap alias android-platform-tools.simg2img simg2img
+        sudo apt install -y python3-pip
+        pip install gdown
+        pip install --upgrade gdown
     - name: Installing Tools
       run: |
         git clone https://github.com/Exynos-nigg/lpunpack-lpmake-mirror.git lpbinary
@@ -49,12 +68,16 @@ jobs:
     - name: Downloading Your SUPER And Extracting
       run: |
         cd lpbinary/binary
-        wget -q ${{ github.event.inputs.SUPER }}
-        if [ -f *.zip ]; then  unzip *.zip; fi
+        wget ${{ github.event.inputs.SUPER }}
+        if [ ! -e super ]; then
+          gdown --fuzzy ${{ github.event.inputs.SUPER }}
+        fi
+        if [ -f *.zip ]; then  unzip *.zip; rm *.zip; fi
+        if [ -f *.7z ]; then  7z x *.7z; rm *.7z; fi
         if [ -f *.xz ]; then  unxz *.xz; fi
         simg2img super.img super.raw.img
         rm super.img
-        wget -q https://sourceforge.net/projects/a03-files/files/tools/lpdump
+        wget https://sourceforge.net/projects/a03-files/files/Tools/lpdump
         chmod +x lpdump
         ./lpdump super.raw.img > super_map.txt
         ./lpunpack super.raw.img
@@ -63,12 +86,33 @@ jobs:
         rm -f system_ext.img
         printf "$(<super_map.txt)" | grep -e "Size:" | awk '{print $2}' > super.txt
         printf "$(<super_map.txt)" | grep -e "Maximum size:" | awk '{print $3}' > main.txt
-        wget -q https://sourceforge.net/projects/a03-files/files/product.img
-        wget -q https://sourceforge.net/projects/a03-files/files/system_ext.img
+        if [ ${{ github.event.inputs.PRODUCT }} ]; then
+          wget ${{ github.event.inputs.PRODUCT }}
+          if [ ! -e product ]; then
+            gdown --fuzzy ${{ github.event.inputs.PRODUCT }}
+          fi
+        else
+          gdown --fuzzy 'https://drive.google.com/file/d/1-9vZIudEGR0I0svi97dIm2pTWLr6KDOU/view?usp=drive_link'
+        fi
+        if [ ${{ github.event.inputs.SYSTEM_EXT }} ]; then
+          wget ${{ github.event.inputs.SYSTEM_EXT }}
+          if [ ! -e system_ext ]; then
+            gdown --fuzzy ${{ github.event.inputs.SYSTEM_EXT }}
+          fi
+        else
+          gdown --fuzzy 'https://drive.google.com/file/d/1OTyWM7eaY8qkvrHio2WLmAiT_Tg7VpLc/view?usp=drive_link'
+        fi
+        if [ -f *.zip ]; then  unzip *.zip; rm *.zip; fi
+        if [ -f *.7z ]; then  7z x *.7z; rm *.7z; fi
     - name: Downloading Your GSI And Extracting
       run: |
         cd lpbinary/binary
-        wget -q ${{ github.event.inputs.GSI }}
+        wget ${{ github.event.inputs.GSI }}
+        if [ $? -ne 0 ]; then
+          gdown --fuzzy ${{ github.event.inputs.GSI }}
+        fi
+        if [ -f *.zip ]; then  unzip *.zip; rm *.zip; fi
+        if [ -f *.7z ]; then  7z x *.7z; rm *.7z; fi
         mkdir sys
         mv *.xz sys
         cd sys
@@ -99,5 +143,6 @@ jobs:
             Version: ${{ github.event.inputs.VERSION }}
             Rom Name: ${{ github.event.inputs.NAME }}
             Flash: Extract the 7z file and flash through ODIN in AP Section.
+            NOTE: DONE SPECIFICALLY FOR A035M, NOT GUARANTED TO WORK FOR A035F OR OTHER VARIANTS
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
