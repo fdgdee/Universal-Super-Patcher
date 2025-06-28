@@ -111,9 +111,9 @@ jobs:
         if [ $? -ne 0 ]; then
           gdown --fuzzy ${{ github.event.inputs.GSI }}
         fi
-        if [ -f *.zip ]; then  unzip *.zip; rm *.zip; fi
-        if [ -f *.7z ]; then  7z x *.7z; rm *.7z; fi
-        if [ -f *.gz ]; then  gunzip *.gz; fi
+        if [ -f *.zip ]; then  unzip *.zip -so | tar -cJf *.tar.xz ; rm *.zip; fi
+        if [ -f *.7z ]; then  7z x *.7z -so | tar -cJf *.tar.xz ; rm *.7z; fi         
+        if [ -f *.gz ]; then  gzip -cd < *.gz -so | xz > *.xz; fi
         mkdir sys
         mv *.xz sys
         cd sys
