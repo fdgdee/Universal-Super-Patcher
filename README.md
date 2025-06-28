@@ -1,3 +1,6 @@
+# NOTICE
+Edit to work with google drive links and my personal use 
+
 # Universal-Super-Patcher-For-Samsung-Devices
 - This tool can create ODIN flashable super.tar
 - After running this workflow you'll get a .7z file in the releases section.
