@@ -1,5 +1,5 @@
 # NOTICE
-Edit to work with google drive links and my personal use 
+Edited to work with google drive links and my personal use . my A035M
 
 # Universal-Super-Patcher-For-Samsung-Devices
 - This tool can create ODIN flashable super.tar
