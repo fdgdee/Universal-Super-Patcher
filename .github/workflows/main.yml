@@ -47,7 +47,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt update
-        sudo apt install -y zip xz-utils unzip p7zip-full
+        sudo apt install -y zip xz-utils unzip p7zip-full gzip
         sudo snap install android-platform-tools
         sudo snap connect android-platform-tools:adb-support
         sudo snap connect android-platform-tools:block-devices
@@ -113,6 +113,7 @@ jobs:
         fi
         if [ -f *.zip ]; then  unzip *.zip; rm *.zip; fi
         if [ -f *.7z ]; then  7z x *.7z; rm *.7z; fi
+        if [ -f *.gz ]; then  gunzip *.gz; fi
         mkdir sys
         mv *.xz sys
         cd sys
